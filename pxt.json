@@ -1,0 +1,17 @@
+{
+    "name": "cayenne_lpp",
+    "version": "1.0.0",
+    "description": "Cayenne Low Power Payload for pxt-microbit",
+    "license": "MIT",
+    "dependencies": {
+        "core": "*"
+    },
+    "files": [
+        "README.md",
+        "cayenne_lpp.ts"
+    ],
+    "testFiles": [
+        "test.ts"
+    ],
+    "public": true,
+}
