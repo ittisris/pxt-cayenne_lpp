@@ -1,7 +1,11 @@
 /**
+ ***********************************************************************
+ * Cayenne LPP
  * https://github.com/myDevicesIoT/cayenne-docs/blob/master/docs/LORA.md
+ * 
  */
-enum LPP_DATA_TYPE {
+
+const enum LPP_DATA_TYPE {
     //% block="Digital Input"
     Digital_Input = 0,
     //% block="Digital Output"
@@ -11,73 +15,78 @@ enum LPP_DATA_TYPE {
     //% block="Analog Output"
     Analog_Output = 3,
     //% block="Temperature"
-    Temperature_Sensor = 103
+    Temperature = 0x67,
+    //% block="Humidity"
+    Humidity = 0x68,
+    //% block="Pressure"
+    Pressure = 0x73
 };
 
-enum LPP_Bit_Sensor {
+const enum LPP_Bit_Sensor {
     //% block="Temparature Sensor"
-    Temperature = 51,
+    Temperature = 21,
     //% block="Light Level"
-    Light,
+    Light = 22,
     //% block="LED Brightness"
-    LED_Brightness,
+    LED_Brightness = 23,
 };
 
-enum LPP_Direction {
+const enum LPP_Direction {
     //% block="Input"
     Input_Port = 0,
     //% block="Output"
     Output_Port = 1,
 };
-// const LPP_Pin_Chan: number[] = [-1, -1, -1, -1, -1, -1, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19, 20]
 
-/**
- * Custom blocks
- */
 //% color=#75b233 icon="\uf085" weight=96
 namespace cayenneLPP {
+
+    const LPP_Pin_Chan: number[] = [-1, -1, -1, -1, -1, -1, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19, 20]
 
     //%
     function getchan(id: number): number {
         switch (id) {
-            case DigitalPin.P0: return 0
-            case DigitalPin.P1: return 1
-            case DigitalPin.P2: return 2
-            case DigitalPin.P3: return 3
-            case DigitalPin.P4: return 4
-            case DigitalPin.P5: return 5
-            case DigitalPin.P6: return 6
-            case DigitalPin.P7: return 7
-            case DigitalPin.P8: return 8
-            case DigitalPin.P9: return 9
-            case DigitalPin.P10: return 10
-            case DigitalPin.P11: return 11
-            case DigitalPin.P12: return 12
-            case DigitalPin.P13: return 13
-            case DigitalPin.P14: return 14
-            case DigitalPin.P15: return 15
-            case DigitalPin.P16: return 16
-            case DigitalPin.P19: return 19
-            case DigitalPin.P20: return 20
-            case LPP_Bit_Sensor.Temperature: return 21
-            case LPP_Bit_Sensor.Light: return 22
-            case LPP_Bit_Sensor.LED_Brightness: return 23
-            default: return -1
+            case LPP_Bit_Sensor.Temperature: return LPP_Bit_Sensor.Temperature
+            case LPP_Bit_Sensor.Light: return LPP_Bit_Sensor.Light
+            case LPP_Bit_Sensor.LED_Brightness: return LPP_Bit_Sensor.LED_Brightness
+            default:
+                return LPP_Pin_Chan[id]
+        }
+    }
+
+    //%
+    function getid(ch: number): number {
+        switch (ch) {
+            case LPP_Bit_Sensor.Temperature: return LPP_Bit_Sensor.Temperature
+            case LPP_Bit_Sensor.Light: return LPP_Bit_Sensor.Light
+            case LPP_Bit_Sensor.LED_Brightness: return LPP_Bit_Sensor.LED_Brightness
+            default:
+                return LPP_Pin_Chan.indexOf(ch)
         }
     }
 
     class cayenneLPP {
         id: number
         channel: number
-        ctype: number    // false = Input
+        ctype: number
+        value: number
 
         constructor(id: number, ctype: LPP_DATA_TYPE) {
             this.id = id
             this.channel = getchan(id)
             this.ctype = ctype
+
+            switch (id) {
+                case LPP_Bit_Sensor.LED_Brightness:
+                    this.value = led.brightness()
+                    break
+                default:
+                    this.value = 0
+            }
         }
     }
 
+    const LPP_PIN_MAX = 5
     let LPP_Temparature: cayenneLPP = null
     let LPP_Light: cayenneLPP = null
     let LPP_Brightness: cayenneLPP = null
@@ -86,93 +95,138 @@ namespace cayenneLPP {
 
     //%
     function byteToHexString(value: number): string {
-        return (("0123456789ABCDEF"[value >> 4]) + ("0123456789ABCDEF"[value & 0xF]))
+        let v: number = value % 256
+        return (("0123456789ABCDEF"[v >> 4]) + ("0123456789ABCDEF"[v & 0xF]))
     }
 
     //%
     function intToHexString(value: number): string {
-        return (byteToHexString(value >> 8) + byteToHexString(value & 0xFF))
+        let v: number = value % 65536
+        return (byteToHexString(v >> 8) + byteToHexString(v & 0xFF))
+    }
+
+    function HexStringToByte(text: string): number {
+        let n = 0
+        let h = 0
+
+        if (text.length > 0) {
+            h = text.charCodeAt(0)
+
+            if ((h >= 48) && (h <= 57))         //'0' - '9'
+                n = h - 48
+            else if ((h >= 65) && (h <= 70))    //'A' - 'F'
+                n = h - 55
+            else if ((h >= 97) && (h <= 102))   //'a' - 'f'
+                n = h - 87
+            else
+                n = 0
+        }
+
+        if (text.length > 1) {
+            h = text.charCodeAt(1)
+
+            if ((h >= 48) && (h <= 57))         //'0' - '9'
+                n = (n * 16) + (h - 48)
+            else if ((h >= 65) && (h <= 70))    //'A' - 'F'
+                n = (n * 16) + (h - 55)
+            else if ((h >= 97) && (h <= 102))   //'a' - 'f'
+                n = (n * 16) + (h - 87)
+            else
+                n = n * 16
+        }
+
+        return n
     }
 
     /**
-    * Convert Raw Data to Cayenne Low-Powered Payload (Hexstring) https://github.com/myDevicesIoT/cayenne-docs/blob/master/docs/LORA.md
+    * Convert to Cayenne Low-Powered Payload (Hexstring) https://github.com/myDevicesIoT/cayenne-docs/blob/master/docs/LORA.md
     * @param llpType Cayenne LPP Type
     * @param channel LPP Channel from 1-255
     * @param value Number
     */
     //% weight=90
     //% blockId="cayenneLPP_lpp"
-    //% block="Convert to CayenneLPP|Type %llpType|at Channel %channel|with Raw Data %value"
+    //% block="Convert to CayenneLPP|Type %llpType|at Channel %channel|with RawData %value"
     //% channel.defl=1
-    //% channel.min=1 channel.max=255
+    //% channel.min=1 channel.max=253
+    //% value.defl=1.0
     export function lpp(llpType: LPP_DATA_TYPE, channel: number, value: number, ratio = 1): string {
         let header = byteToHexString(channel) + byteToHexString(llpType)
         switch (llpType) {
             case LPP_DATA_TYPE.Digital_Input: return (header + (value <= 0 ? "00" : "01"))
             case LPP_DATA_TYPE.Digital_Output: return (header + (value <= 0 ? "00" : "01"))
-            case LPP_DATA_TYPE.Analog_Input: return (header + intToHexString(Math.round((value / ratio) * 100)))
-            case LPP_DATA_TYPE.Analog_Output: return (header + intToHexString(Math.round((value / ratio) * 100)))
-            case LPP_DATA_TYPE.Temperature_Sensor: return (header + intToHexString(value * 10))
+            case LPP_DATA_TYPE.Analog_Input: return (header + intToHexString(Math.round(value * 100)))
+            case LPP_DATA_TYPE.Analog_Output: return (header + intToHexString(Math.round(value * 100)))
+            case LPP_DATA_TYPE.Temperature: return (header + intToHexString(Math.round(value * 10)))
+            case LPP_DATA_TYPE.Humidity: return (header + byteToHexString(Math.round(value * 2)))
+            case LPP_DATA_TYPE.Pressure: return (header + intToHexString(Math.round(value * 10)))
             default: return ""
         }
     }
 
     /**
-    * Register Sensor 
+    * Add Sensor 
     * @param sensor Sensortype
     */
     //% weight=99
-    //% blockId="cayenneLPP_register_sensor"
-    //% block="Register %sensor"
+    //% blockId="cayenneLPP_add_sensor"
+    //% block="Add %sensor"
     //% pin.defl=LPP_Bit_Sensor.Temperature
-    export function register_sensor(sensor: LPP_Bit_Sensor) {
+    export function add_sensor(sensor: LPP_Bit_Sensor): void {
         switch (sensor) {
             case LPP_Bit_Sensor.Temperature:
-                LPP_Temparature = new cayenneLPP(sensor, LPP_DATA_TYPE.Temperature_Sensor)
+                LPP_Temparature = new cayenneLPP(sensor, LPP_DATA_TYPE.Temperature)
+                if (LPP_Pin.length > LPP_PIN_MAX) LPP_Pin.shift()
                 LPP_Pin.push(LPP_Temparature)
                 break
 
             case LPP_Bit_Sensor.Light:
                 LPP_Light = new cayenneLPP(sensor, LPP_DATA_TYPE.Analog_Input)
+                if (LPP_Pin.length > LPP_PIN_MAX) LPP_Pin.shift()
                 LPP_Pin.push(LPP_Light)
                 break
 
             case LPP_Bit_Sensor.LED_Brightness:
                 LPP_Light = new cayenneLPP(sensor, LPP_DATA_TYPE.Analog_Output)
+                if (LPP_Pin.length > LPP_PIN_MAX) LPP_Pin.shift()
                 LPP_Pin.push(LPP_Light)
                 break
         }
     }
 
     /**
-        * Register Digital Pin to CayenneLLP
-        * @param pin DigitalPin
+    * Add Digital Pin to CayenneLLP
+    * @param pin DigitalPin
     */
     //% weight=100
-    //% blockId="cayenneLPP_register_digital"
-    //% block="Register Digital %dir|Pin %pin"
+    //% blockId="cayenneLPP_add_digital"
+    //% block="Add Digital %dir|Pin %pin"
     //% pin.defl=DigitalPin.P0
-    export function register_digital(dir: LPP_Direction, pin: DigitalPin) {
+    export function add_digital(dir: LPP_Direction, pin: DigitalPin): void {
         if (dir == LPP_Direction.Input_Port)
             LPP_Pin_0 = new cayenneLPP(pin, LPP_DATA_TYPE.Digital_Input)
         else
-            LPP_Pin_0 = new cayenneLPP(pin, LPP_DATA_TYPE.Analog_Output)
+            LPP_Pin_0 = new cayenneLPP(pin, LPP_DATA_TYPE.Digital_Output)
+
+        if (LPP_Pin.length > LPP_PIN_MAX) LPP_Pin.shift()
         LPP_Pin.push(LPP_Pin_0)
     }
 
     /**
-        * Register Analog Pin to CayenneLLP
-        * @param pin AnologPin
+    * Add Analog Pin to CayenneLLP
+    * @param pin AnologPin
     */
     //% weight=100
-    //% blockId="cayenneLPP_register_analog"
-    //% block="Register Analog %dir|Pin %pin"
+    //% blockId="cayenneLPP_add_analog"
+    //% block="Add Analog %dir|Pin %pin"
     //% pin.defl=AnalogPin.P0
-    export function register_analog(dir: LPP_Direction, pin: AnalogPin) {
+    export function add_analog(dir: LPP_Direction, pin: AnalogPin): void {
         if (dir == LPP_Direction.Input_Port)
             LPP_Pin_0 = new cayenneLPP(pin, LPP_DATA_TYPE.Analog_Input)
         else
             LPP_Pin_0 = new cayenneLPP(pin, LPP_DATA_TYPE.Analog_Output)
+
+        if (LPP_Pin.length > LPP_PIN_MAX) LPP_Pin.shift()
         LPP_Pin.push(LPP_Pin_0)
     }
 
@@ -185,43 +239,96 @@ namespace cayenneLPP {
     //% block="CayenneLPP"
     export function lpp_upload(): string {
         let payload = ""
-        for (let s = 0; s < LPP_Pin.length; s++) {
-            switch (LPP_Pin[s].id) {
+        for (let c = 0; c < LPP_Pin.length; c++) {
+            switch (LPP_Pin[c].id) {
                 case LPP_Bit_Sensor.Temperature:
-                    payload = payload + lpp(LPP_Pin[s].ctype, LPP_Pin[s].channel, input.temperature())      // celsius
+                    LPP_Pin[c].value = input.temperature()  // celsius
                     break
                 case LPP_Bit_Sensor.Light:
-                    payload = payload + lpp(LPP_Pin[s].ctype, LPP_Pin[s].channel, input.lightLevel())    // 0 - 255
+                    LPP_Pin[c].value = pins.map(input.lightLevel(), 0, 255, 0, 1)   // 0 - 255
                     break
                 case LPP_Bit_Sensor.LED_Brightness:
-                    payload = payload + lpp(LPP_Pin[s].ctype, LPP_Pin[s].channel, led.brightness())     // 0 - 255
+                    LPP_Pin[c].value = pins.map(led.brightness(), 0, 255, 0, 1)    // 0 - 255
                     break
                 default:
-                    switch (LPP_Pin[s].ctype) {
+                    switch (LPP_Pin[c].ctype) {
                         case LPP_DATA_TYPE.Digital_Input:
+                            LPP_Pin[c].value = pins.digitalReadPin(LPP_Pin[c].id)
+                            break
                         case LPP_DATA_TYPE.Digital_Output:
-                            payload = payload + lpp(LPP_Pin[s].ctype, LPP_Pin[s].channel, pins.digitalReadPin(LPP_Pin[s].id))
                             break
                         case LPP_DATA_TYPE.Analog_Input:
+                            LPP_Pin[c].value = pins.analogReadPin(LPP_Pin[c].id) / 1024    // 0 - 1023
+                            break
                         case LPP_DATA_TYPE.Analog_Output:
-                            payload = payload + lpp(LPP_Pin[s].ctype, LPP_Pin[s].channel, pins.analogReadPin(LPP_Pin[s].id), 4)    // 0 - 1023 -> 0 - 255
+                            LPP_Pin[c].value = pins.analogReadPin(LPP_Pin[c].id) / 1024    // 0 - 1023
                             break
                         default:
                             break
                     }
             }
+            payload = payload + lpp(LPP_Pin[c].ctype, LPP_Pin[c].channel, LPP_Pin[c].value)
         }
         return payload
     }
 
     /**
     * Update I/O with CayenneLPP
-    * @param no
+    * @param payload
     */
     //% weight=97
     //% blockId="cayenneLPP_lpp_update"
-    //% block="Update I/O form hex string|%payload"
-    export function lpp_update(payload: string) {
+    //% block="Update I/O pins with|%payload"
+    //% payload.defl="0123456789ABCDEF"
+    export function lpp_update(payload: string): void {
+        if (LPP_Pin.length > 0) {
+            let i = 0
+            while ((i * 2) <= (payload.length - 8)) {
+                let ch = HexStringToByte(payload.substr(i * 2, 2))
+                let l = 0
+                do {
+                    if (LPP_Pin[l].channel == ch)
+                        break
+                    else
+                        l++
+                } while (l < LPP_Pin.length)
+
+                if (l >= LPP_Pin.length)
+                    i = i + 4
+                else {
+                    let v = HexStringToByte(payload.substr(++i * 2, 2))
+                    v = (v * 256) + HexStringToByte(payload.substr(++i * 2, 2))
+                    i = i + 2
+                    switch (LPP_Pin[l].id) {
+                        case LPP_Bit_Sensor.Temperature:
+                            break
+                        case LPP_Bit_Sensor.Light:
+                            break
+                        case LPP_Bit_Sensor.LED_Brightness:
+                            LPP_Pin[l].value = v / 100
+                            led.setBrightness(Math.floor(pins.map(v, 0, 100, 0, 255)))
+                            break
+                        default:
+                            switch (LPP_Pin[l].ctype) {
+                                case LPP_DATA_TYPE.Digital_Input:
+                                    break
+                                case LPP_DATA_TYPE.Digital_Output:
+                                    LPP_Pin[l].value = (v == 0) ? 0 : 1
+                                    pins.digitalWritePin(LPP_Pin[l].id, LPP_Pin[l].value)
+                                    break
+                                case LPP_DATA_TYPE.Analog_Input:
+                                    break
+                                case LPP_DATA_TYPE.Analog_Output:
+                                    LPP_Pin[l].value = v
+                                    pins.analogWritePin(LPP_Pin[l].id, LPP_Pin[l].value)
+                                    break
+                                default:
+                                    break
+                            }
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -233,8 +340,7 @@ namespace cayenneLPP {
     //% block="Read Digital Input Pin %pin|and Convert to CayenneLPP"
     //% pin.defl=DigitalPin.P0
     function digital_input(pin: DigitalPin): string {
-        let channel = getchan(pin)
-        return lpp(LPP_DATA_TYPE.Digital_Input, channel, pins.digitalReadPin(pin))
+        return lpp(LPP_DATA_TYPE.Digital_Input, getchan(pin), pins.digitalReadPin(pin))
     }
 
     /**
@@ -246,8 +352,7 @@ namespace cayenneLPP {
     //% block="Read Digital Output Pin %pin|and Convert to CayenneLPP"
     //% pin.defl=DigitalPin.P0
     function digital_output(pin: DigitalPin): string {
-        let channel = getchan(pin)
-        return lpp(LPP_DATA_TYPE.Digital_Output, channel, pins.digitalReadPin(pin))
+        return lpp(LPP_DATA_TYPE.Digital_Output, getchan(pin), pins.digitalReadPin(pin))
     }
 
     /**
@@ -259,8 +364,7 @@ namespace cayenneLPP {
     //% block="Read Analog Input Pin %pin|and Convert to CayenneLPP"
     //% pin.defl=AnalogPin.P0
     function analog_input(pin: AnalogPin): string {
-        let channel = getchan(pin)
-        return lpp(LPP_DATA_TYPE.Analog_Input, channel, pins.analogReadPin(pin))
+        return lpp(LPP_DATA_TYPE.Analog_Input, getchan(pin), pins.analogReadPin(pin))
     }
 
     /**
@@ -272,7 +376,6 @@ namespace cayenneLPP {
     //% block="Read Analog Output Pin %pin|and Convert to CayenneLPP"
     //% pin.defl=AnalogPin.P0
     function analog_output(pin: AnalogPin): string {
-        let channel = getchan(pin)
-        return lpp(LPP_DATA_TYPE.Analog_Output, channel, pins.analogReadPin(pin))
+        return lpp(LPP_DATA_TYPE.Analog_Output, getchan(pin), pins.analogReadPin(pin))
     }
 }
