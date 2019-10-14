@@ -3,6 +3,7 @@
  * Cayenne LPP
  * https://github.com/myDevicesIoT/cayenne-docs/blob/master/docs/LORA.md
  * 
+ * Itti Srisumalai: 2019
  */
 
 const enum LPP_DATA_TYPE {
@@ -279,7 +280,7 @@ namespace cayenneLPP {
     //% weight=97
     //% blockId="cayenneLPP_lpp_update"
     //% block="Update I/O pins with|%payload"
-    //% payload.defl="0123456789ABCDEF"
+    //% payload.defl="000064FF"
     export function lpp_update(payload: string): void {
         if (LPP_Pin.length > 0) {
             let i = 0
@@ -329,53 +330,5 @@ namespace cayenneLPP {
                 }
             }
         }
-    }
-
-    /**
-    * Read and convert Digital Input Pin to CayenneLLP
-    * @param pin DigitalPin
-    */
-    //% weight=99
-    //% blockId="cayenneLPP_digital_input"
-    //% block="Read Digital Input Pin %pin|and Convert to CayenneLPP"
-    //% pin.defl=DigitalPin.P0
-    function digital_input(pin: DigitalPin): string {
-        return lpp(LPP_DATA_TYPE.Digital_Input, getchan(pin), pins.digitalReadPin(pin))
-    }
-
-    /**
-    * Read and convert Digital Output Pin to CayenneLLP
-    * @param pin DigitalPin
-    */
-    //% weight=98
-    //% blockId="cayenneLPP_digital_output"
-    //% block="Read Digital Output Pin %pin|and Convert to CayenneLPP"
-    //% pin.defl=DigitalPin.P0
-    function digital_output(pin: DigitalPin): string {
-        return lpp(LPP_DATA_TYPE.Digital_Output, getchan(pin), pins.digitalReadPin(pin))
-    }
-
-    /**
-    * Read and convert Analog Input Pin to CayenneLLP
-    * @param pin AnalogPin
-    */
-    //% weight=97
-    //% blockId="cayenneLPP_analog_input"
-    //% block="Read Analog Input Pin %pin|and Convert to CayenneLPP"
-    //% pin.defl=AnalogPin.P0
-    function analog_input(pin: AnalogPin): string {
-        return lpp(LPP_DATA_TYPE.Analog_Input, getchan(pin), pins.analogReadPin(pin))
-    }
-
-    /**
-    * Read and convert AnalogPin Output to CayenneLLP
-    * @param pin AnalogPin
-    */
-    //% weight=96
-    //% blockId="cayenneLPP_analog_output"
-    //% block="Read Analog Output Pin %pin|and Convert to CayenneLPP"
-    //% pin.defl=AnalogPin.P0
-    function analog_output(pin: AnalogPin): string {
-        return lpp(LPP_DATA_TYPE.Analog_Output, getchan(pin), pins.analogReadPin(pin))
     }
 }
