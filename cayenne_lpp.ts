@@ -411,13 +411,12 @@ namespace cayenneLPP {
 	//% indic.defl=":"
 	//% sp.defl=","
 	export function extractPayloadStr(text: string, indic: string, sp: string = ","): string[] {
-		let n = 0
-		let r: string[] = [""]
+		let r: string[] = []
 		if (indic != "") {
-			n = text.indexOf(indic)
+			let n = text.indexOf(indic)
 			if (n >= 0) {
-				n = indic.length
-				let s = text.substr(n, text.length - n)
+				let m = indic.length
+				let s = text.substr(n + m, text.length - (n + m))
 				r = s.split(sp, 3)
 			}
 		}
