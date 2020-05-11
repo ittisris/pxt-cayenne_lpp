@@ -408,12 +408,20 @@ namespace cayenneLPP {
 	//% block="Extract payload from |%text with |%wc"
 	//% icon="\uf085"
 	//% text.defl="00,0055AAFF"
-	//% wc.defl="00,0055AAFF"
+	//% wc.defl=":"
 	export function extractPayloadStr(text: string, wc: string): string {
 		let n=text.indexOf(wc)
 		let str=""
+		console.log(n.toString())
+		console.log(text)
+		console.log("")
+		
 		if(n>=0) {
 			let splitted = text.split(",", 3)
+			// console.log(splitted[0])
+			// console.log(splitted[1])
+			// console.log(splitted[2])
+			console.log(splitted.length.toString())
 			if (splitted.length>1)
 				str=splitted[splitted.length-1]
 		}
