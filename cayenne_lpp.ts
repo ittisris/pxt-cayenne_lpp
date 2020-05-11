@@ -400,31 +400,36 @@ namespace cayenneLPP {
 
 	/**
 	 * Extract String to Payload.
-	 * @param text to convert, eg: "XXXX,PPPPPP" -> "PPPPPP"
+	 * @param text to convert, eg: "XXXX,YYYY,ZZZZ" -> ["XXXX"] ["YYYY"] ["ZZZZ"]
 	 */
 	//% weight=98
 	//% help=cayenneLPP/extractPayloadStr
 	//% blockId="cayenneLPP_extractPayloadStr
-	//% block="Extract payload from |%text with |%wc"
+	//% block="Extract payload from |%text with |%indic |%sp"
 	//% icon="\uf085"
-	//% text.defl="00,0055AAFF"
-	//% wc.defl=":"
-	export function extractPayloadStr(text: string, wc: string): string {
-		let n=text.indexOf(wc)
-		let str=""
-		console.log(n.toString())
-		console.log(text)
-		console.log("")
+	//% text.defl=":01,0055AAFF"
+	//% indic=":"
+	//% sp.defl=","
+	export function extractPayloadStr(text: string, indic : string, sp: string =","): Array {
+		let n=0
+		let r=[]
 		
-		if(n>=0) {
-			let splitted = text.split(",", 3)
-			// console.log(splitted[0])
-			// console.log(splitted[1])
-			// console.log(splitted[2])
-			console.log(splitted.length.toString())
-			if (splitted.length>1)
-				str=splitted[splitted.length-1]
+		let str=""
+		if(indic != "") {
+			n=text.indexOf(indic)
+			str=text.substr(n+1)
 		}
-		return str
+		else
+			str=text
+
+		console.log(n.toString())
+		console.log(str)
+
+		if(n>=0)
+			r = str.split(sp, 3)
+
+		console.log("")
+		console.log(r.length.toString())
+		return r
 	}
 }
