@@ -405,31 +405,24 @@ namespace cayenneLPP {
 	//% weight=98
 	//% help=cayenneLPP/extractPayloadStr
 	//% blockId="cayenneLPP_extractPayloadStr
-	//% block="Extract payload from |%text with |%indic |%sp"
+	//% block="Extract payload from |%text with |%indic separator|%sp"
 	//% icon="\uf085"
 	//% text.defl=":01,0055AAFF"
-	//% indic=":"
+	//% indic.defl=":"
 	//% sp.defl=","
-	export function extractPayloadStr(text: string, indic : string, sp: string =","): Array {
-		let n=0
-		let r=[]
-		
-		let str=""
-		if(indic != "") {
-			n=text.indexOf(indic)
-			str=text.substr(n+1)
+	export function extractPayloadStr(text: string, indic: string, sp: string = ","): string[] {
+		let n = 0
+		let r: string[] = [""]
+		if (indic != "") {
+			n = text.indexOf(indic)
+			if (n >= 0) {
+				n = indic.length
+				let s = text.substr(n, text.length - n)
+				r = s.split(sp, 3)
+			}
 		}
 		else
-			str=text
-
-		console.log(n.toString())
-		console.log(str)
-
-		if(n>=0)
-			r = str.split(sp, 3)
-
-		console.log("")
-		console.log(r.length.toString())
+			r = text.split(sp, 3)
 		return r
 	}
 }
