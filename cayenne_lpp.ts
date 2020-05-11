@@ -368,8 +368,8 @@ namespace cayenneLPP {
 	 * @param text to convert, eg: "Hello"
 	 */
 	//% weight=98
-	//% help=loraBit/packHexString
-	//% blockId="loraBit_packHexString"
+	//% help=cayenneLPP/packHexString
+	//% blockId="cayenneLPP_packHexString"
 	//% block="Convert|%text to hex string"
 	//% icon="\uf085"
 	//% text.defl="Hello, World!"
@@ -385,8 +385,8 @@ namespace cayenneLPP {
 	 * @param text to convert, eg: "313233414243" -> "123ABC"
 	 */
 	//% weight=98
-	//% help=loraBit/unpackHexString
-	//% blockId="loraBit_unpackHexString"
+	//% help=cayenneLPP/unpackHexString
+	//% blockId="cayenneLPP_unpackHexString"
 	//% block="Convert hex string|%text to text"
 	//% icon="\uf085"
 	//% text.defl="313233414243"
@@ -399,17 +399,24 @@ namespace cayenneLPP {
 	}
 
 	/**
-	 * Convert Int8 to Hexstring.
-	 * @param  to convert, eg: 10 -> "0A"
+	 * Extract String to Payload.
+	 * @param text to convert, eg: "XXXX,PPPPPP" -> "PPPPPP"
 	 */
 	//% weight=98
-	//% help=loraBit/toHexString
-	//% blockId="loraBit_toHexString"
-	//% block="Convert Int8|%num to Hexstring"
+	//% help=cayenneLPP/extractPayloadStr
+	//% blockId="cayenneLPP_extractPayloadStr
+	//% block="Extract payload from |%text with |%wc"
 	//% icon="\uf085"
-	//% num.min=0 num.max=255
-	//% num.defl=0
-	export function toHexString(num: number): string {
-		return byteToHexString(num)
+	//% text.defl="00,0055AAFF"
+	//% wc.defl="00,0055AAFF"
+	export function extractPayloadStr(text: string, wc: string): string {
+		let n=text.indexOf(wc)
+		let str=""
+		if(n>=0) {
+			let splitted = text.split(",", 3)
+			if (splitted.length>1)
+				str=splitted[splitted.length-1]
+		}
+		return str
 	}
 }
